@@ -257,3 +257,36 @@ docker run -d \
   --runtime nvidia
   ghcr.io/blakeblackshear/frigate-jetson:stable
 ```
+
+#### Setup Decoder
+
+The decoder you need to pass in the `hwaccel_args` will depend on the input video.
+
+A list of supported codecs (you can use `ffmpeg -decoders | grep nvv4l2` in the container to get the ones your card supports)
+
+```
+ V..... h264_nvv4l2dec       h264 (nvv4l2dec) (codec h264)
+ V..... hevc_nvv4l2dec       hevc (nvv4l2dec) (codec hevc)
+ V..... mpeg2_nvv4l2dec      mpeg2 (nvv4l2dec) (codec mpeg2video)
+ V..... mpeg4_nvv4l2dec      mpeg4 (nvv4l2dec) (codec mpeg4)
+ V..... vp8_nvv4l2dec        vp8 (nvv4l2dec) (codec vp8)
+ V..... vp9_nvv4l2dec        vp9 (nvv4l2dec) (codec vp9)
+```
+
+For example, for H264 video, you'll select `preset-jetson-h264`.
+
+```yaml
+ffmpeg:
+  hwaccel_args: preset-jetson-h264
+```
+
+If everything is working correctly, you should see a significant reduction in ffmpeg CPU load and power consumption.
+Verify that hardware decoding is working by running `jtop` (`sudo pip3 install -U jetson-stats`), which should show
+that NVDEC/NVDEC1 are in use.
+
+:::note
+
+Jetson hardware-accelerated *encoding* is not currently supported because NVIDIA's jetson-ffmpeg was not built with
+`nvv4l2enc` enabled. Birdseye RTSP restreaming, if enabled, will use libx264.
+
+:::
