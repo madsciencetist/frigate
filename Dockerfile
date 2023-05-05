@@ -119,8 +119,8 @@ RUN apt-get -qq update \
     && echo "deb http://raspbian.raspberrypi.org/raspbian/ bullseye main contrib non-free rpi" | tee /etc/apt/sources.list.d/raspi.list \
     && apt-get -qq update \
     && apt-get -qq install -y \
-    python3 \
-    python3-dev \
+    python3.9 \
+    python3.9-dev \
     wget \
     # opencv dependencies
     build-essential cmake git pkg-config libgtk-3-dev \
@@ -132,6 +132,9 @@ RUN apt-get -qq update \
     # scipy dependencies
     gcc gfortran libopenblas-dev liblapack-dev && \
     rm -rf /var/lib/apt/lists/*
+
+# Ensure python3 defaults to python3.9
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
 
 RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py \
     && python3 get-pip.py "pip"
@@ -181,6 +184,7 @@ RUN --mount=type=bind,source=docker/install_deps.sh,target=/deps/install_deps.sh
     /deps/install_deps.sh
 
 RUN --mount=type=bind,from=wheels,source=/wheels,target=/deps/wheels \
+    python3 -m pip install --upgrade pip && \
     pip3 install -U /deps/wheels/*.whl
 
 COPY --from=deps-rootfs / /
