@@ -242,3 +242,18 @@ processes:
 If you do not see these processes, check the `docker logs` for the container and look for decoding errors.
 
 These instructions were originally based on the [Jellyfin documentation](https://jellyfin.org/docs/general/administration/hardware-acceleration.html#nvidia-hardware-acceleration-on-docker-linux).
+
+### NVIDIA Jetson (Nano, NX, AGX)
+
+A separate docker image is available that is based on Jetpack/L4T. It comes with an official NVIDIA `ffmpeg` build
+with codecs that use the Jetson's dedicated media engine. Use the `frigate-jetpack` image with the nvidia container
+runtime:
+
+##### Docker Run CLI
+
+```bash
+docker run -d \
+  ...
+  --runtime nvidia
+  ghcr.io/blakeblackshear/frigate-jetson:stable
+```

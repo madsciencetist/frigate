@@ -3,11 +3,14 @@
 # https://askubuntu.com/questions/972516/debian-frontend-environment-variable
 ARG DEBIAN_FRONTEND=noninteractive
 
-FROM debian:11 AS base
+ARG BASE_IMAGE=debian:11
+ARG SLIM_BASE=debian:11-slim
+
+FROM ${BASE_IMAGE} AS base
 
 FROM --platform=linux/amd64 debian:11 AS base_amd64
 
-FROM debian:11-slim AS slim-base
+FROM ${SLIM_BASE} AS slim-base
 
 FROM slim-base AS wget
 ARG DEBIAN_FRONTEND
