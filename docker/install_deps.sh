@@ -41,9 +41,15 @@ fi
 
 # ffmpeg -> arm64
 if [[ "${TARGETARCH}" == "arm64" ]]; then
-    # add raspberry pi repo
-    gpg --no-default-keyring --keyring /usr/share/keyrings/raspbian.gpg --keyserver keyserver.ubuntu.com --recv-keys 82B129927FA3303E
-    echo "deb [signed-by=/usr/share/keyrings/raspbian.gpg] https://archive.raspberrypi.org/debian/ bullseye main" | tee /etc/apt/sources.list.d/raspi.list
+    if [ -f /etc/jetson-ota-public.key -o -f /etc/apt/trusted.gpg.d/jetson-ota-public.asc ]; then    # file exists in jetson l4t-base image
+        # add jetson repo
+        echo "deb https://repo.download.nvidia.com/jetson/ffmpeg main main" | tee /etc/apt/sources.list.d/jetson_ffmpeg.list
+    else
+        # add raspberry pi repo
+        gpg --no-default-keyring --keyring /usr/share/keyrings/raspbian.gpg --keyserver keyserver.ubuntu.com --recv-keys 82B129927FA3303E
+        echo "deb [signed-by=/usr/share/keyrings/raspbian.gpg] https://archive.raspberrypi.org/debian/ bullseye main" | tee /etc/apt/sources.list.d/raspi.list
+    fi
+
     apt-get -qq update
     apt-get -qq install --no-install-recommends --no-install-suggests -y ffmpeg
 fi
