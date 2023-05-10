@@ -246,7 +246,7 @@ These instructions were originally based on the [Jellyfin documentation](https:/
 ### NVIDIA Jetson (Nano, NX, AGX)
 
 A separate docker image is available that is based on Jetpack/L4T. It comes with an official NVIDIA `ffmpeg` build
-with codecs that use the Jetson's dedicated media engine. Use the `frigate-jetpack` image with the nvidia container
+with codecs that use the Jetson's dedicated media engine. Use the `frigate-jetson` image with the nvidia container
 runtime:
 
 ##### Docker Run CLI
