@@ -65,3 +65,16 @@ jobs:
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-tensorrt
           cache-from: type=gha
+      - name: Build and push Jetson
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          target: frigate
+          build-args:
+            - BASE_IMAGE=nvcr.io/nvidia/l4t-base:r35.1.0
+            - SLIM_BASE=nvcr.io/nvidia/l4t-base:r35.1.0
+          tags: |
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson
+          cache-from: type=gha
