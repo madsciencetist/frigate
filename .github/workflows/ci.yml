@@ -73,8 +73,8 @@ jobs:
           platforms: linux/arm64
           target: frigate
           build-args:
-            - BASE_IMAGE=nvcr.io/nvidia/l4t-base:r35.1.0
-            - SLIM_BASE=nvcr.io/nvidia/l4t-base:r35.1.0
+            - BASE_IMAGE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
+            - SLIM_BASE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson
           cache-from: type=gha
