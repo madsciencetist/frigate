@@ -154,6 +154,25 @@ ARG TARGETARCH
 COPY requirements-tensorrt.txt /requirements-tensorrt.txt
 RUN mkdir -p /trt-wheels && pip3 wheel --wheel-dir=/trt-wheels -r requirements-tensorrt.txt
 
+FROM wheels as jetson-trt-wheels
+ARG DEBIAN_FRONTEND
+ARG TARGETARCH
+
+# Determine version of tensorrt already installed in base image, e.g. "Version: 8.4.1-1+cuda11.4"
+RUN NVINFER_VER=$(dpkg -s libnvinfer8 | grep -Po "Version: \K.*") \
+    && echo $NVINFER_VER | grep -Po "^\d+\.\d+\.\d+" > /etc/TENSORRT_VER \
+    && echo $NVINFER_VER | grep -Po "cuda\K.*" > /etc/CUDA_VER
+
+# python-tensorrt build deps are 3.4 GB!
+RUN CUDA_PKG_VER=$(sed "s/\./-/g" /etc/CUDA_VER) \
+    && apt-get update \
+    && apt-get install -y cuda-cudart-dev-${CUDA_PKG_VER} cuda-nvcc-${CUDA_PKG_VER} libnvonnxparsers-dev libnvparsers-dev libnvinfer-plugin-dev \
+    && rm -rf /var/lib/apt/lists/*;
+RUN --mount=type=bind,source=docker/build_python_tensorrt.sh,target=/deps/build_python_tensorrt.sh \
+    TENSORRT_VER=$(cat /etc/TENSORRT_VER) /deps/build_python_tensorrt.sh
+
+COPY requirements-tensorrt-jetson.txt /requirements-tensorrt-jetson.txt
+RUN pip3 wheel --wheel-dir=/trt-wheels -r requirements-tensorrt-jetson.txt
 
 # Collect deps in a single layer
 FROM scratch AS deps-rootfs
@@ -266,6 +285,11 @@ RUN --mount=type=bind,from=trt-wheels,source=/trt-wheels,target=/deps/trt-wheels
     pip3 install -U /deps/trt-wheels/*.whl && \
     ln -s libnvrtc.so.11.2 /usr/local/lib/python3.9/dist-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so && \
     ldconfig
+
+# Frigate w/ TensorRT for NVIDIA Jetson platforms
+FROM frigate AS frigate-jetson
+RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
+    pip3 install -U /deps/trt-wheels/*.whl
 
 # Dev Container w/ TRT
 FROM devcontainer AS devcontainer-trt
