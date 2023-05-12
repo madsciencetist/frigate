@@ -55,7 +55,7 @@ jobs:
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Build and push TensorRT
+      - name: Build and push TensorRT (desktop)
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -65,16 +65,16 @@ jobs:
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-tensorrt
           cache-from: type=gha
-      - name: Build and push Jetson
+      - name: Build and push TensorRT (Jetson Xavier & Orin)
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           platforms: linux/arm64
-          target: frigate
+          target: frigate-jetson
           build-args:
-            - BASE_IMAGE=nvcr.io/nvidia/l4t-base:r35.1.0
-            - SLIM_BASE=nvcr.io/nvidia/l4t-base:r35.1.0
+            - BASE_IMAGE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
+            - SLIM_BASE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson
           cache-from: type=gha

@@ -5,7 +5,7 @@ VERSION = 0.13.0
 IMAGE_REPO ?= ghcr.io/blakeblackshear/frigate
 CURRENT_UID := $(shell id -u)
 CURRENT_GID := $(shell id -g)
-JETSON_BASE ?= nvcr.io/nvidia/l4t-base:r35.1.0
+JETSON_BASE ?= nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
 JETSON_ARGS := --build-arg BASE_IMAGE=$(JETSON_BASE) --build-arg SLIM_BASE=$(JETSON_BASE)
 
 version:
@@ -25,7 +25,7 @@ arm64:
 	docker buildx build --platform linux/arm64 --target=frigate --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH) .
 
 jetson:
-	docker buildx build --platform linux/arm64 --target=frigate --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson $(JETSON_ARGS) .
+	docker buildx build --platform linux/arm64 --target=frigate-jetson --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson $(JETSON_ARGS) .
 
 build: version amd64 arm64 jetson
 	docker buildx build --platform linux/arm64/v8,linux/amd64 --target=frigate --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH) .
@@ -33,7 +33,7 @@ build: version amd64 arm64 jetson
 push: build
 	docker buildx build --push --platform linux/arm64/v8,linux/amd64 --target=frigate --tag $(IMAGE_REPO):${GITHUB_REF_NAME}-$(COMMIT_HASH) .
 	docker buildx build --push --platform linux/amd64 --target=frigate-tensorrt --tag $(IMAGE_REPO):${GITHUB_REF_NAME}-$(COMMIT_HASH)-tensorrt .
-	docker buildx build --push --platform linux/arm64 --target=frigate --tag $(IMAGE_REPO):$(GITHUB_REF_NAME)-$(COMMIT_HASH)-jetson $(JETSON_ARGS) .
+	docker buildx build --push --platform linux/arm64 --target=frigate-jetson --tag $(IMAGE_REPO):$(GITHUB_REF_NAME)-$(COMMIT_HASH)-jetson $(JETSON_ARGS) .
 
 run: local
 	docker run --rm --publish=5000:5000 --volume=${PWD}/config:/config frigate:latest
