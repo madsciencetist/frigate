@@ -109,6 +109,9 @@ FROM base AS wheels
 ARG DEBIAN_FRONTEND
 ARG TARGETARCH
 
+RUN echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main" > /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-bionic.list \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776
+
 # Use a separate container to build wheels to prevent build dependencies in final image
 RUN apt-get -qq update \
     && apt-get -qq install -y \
@@ -121,6 +124,7 @@ RUN apt-get -qq update \
     && apt-get -qq install -y \
     python3.9 \
     python3.9-dev \
+    python3.9-distutils \
     wget \
     # opencv dependencies
     build-essential cmake git pkg-config libgtk-3-dev \
@@ -162,6 +166,11 @@ ARG TARGETARCH
 RUN NVINFER_VER=$(dpkg -s libnvinfer8 | grep -Po "Version: \K.*") \
     && echo $NVINFER_VER | grep -Po "^\d+\.\d+\.\d+" > /etc/TENSORRT_VER \
     && echo $NVINFER_VER | grep -Po "cuda\K.*" > /etc/CUDA_VER
+
+RUN wget https://gitlab.com/nvidia/container-images/l4t-base/-/raw/master/jetson-ota-public.key -O /etc/jetson-ota-public.key \
+    && apt-key add /etc/jetson-ota-public.key \
+    && echo "deb https://repo.download.nvidia.com/jetson/common r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    && echo "deb https://repo.download.nvidia.com/jetson/t194 r32.6 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
 
 # python-tensorrt build deps are 3.4 GB!
 RUN CUDA_PKG_VER=$(sed "s/\./-/g" /etc/CUDA_VER) \

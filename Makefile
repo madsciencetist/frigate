@@ -5,7 +5,7 @@ VERSION = 0.13.0
 IMAGE_REPO ?= ghcr.io/blakeblackshear/frigate
 CURRENT_UID := $(shell id -u)
 CURRENT_GID := $(shell id -g)
-JETSON_BASE ?= nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
+JETSON_BASE ?= nvcr.io/nvidia/l4t-tensorrt:r8.0.1-runtime
 JETSON_ARGS := --build-arg BASE_IMAGE=$(JETSON_BASE) --build-arg SLIM_BASE=$(JETSON_BASE)
 
 version:

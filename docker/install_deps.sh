@@ -2,6 +2,9 @@
 
 set -euxo pipefail
 
+echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main" > /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-bionic.list
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776
+
 apt-get -qq update
 
 apt-get -qq install --no-install-recommends -y \
@@ -11,6 +14,7 @@ apt-get -qq install --no-install-recommends -y \
     procps vainfo \
     unzip locales tzdata libxml2 xz-utils \
     python3.9 \
+    python3.9-distutils \
     python3-pip \
     curl \
     jq \
@@ -47,6 +51,11 @@ fi
 
 # ffmpeg -> arm64
 if [[ "${TARGETARCH}" == "arm64" ]]; then
+    wget https://gitlab.com/nvidia/container-images/l4t-base/-/raw/master/jetson-ota-public.key -O /etc/jetson-ota-public.key \
+    && apt-key add /etc/jetson-ota-public.key \
+    && echo "deb https://repo.download.nvidia.com/jetson/common r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    && echo "deb https://repo.download.nvidia.com/jetson/t194 r32.6 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+
     if [ -f /etc/jetson-ota-public.key -o -f /etc/apt/trusted.gpg.d/jetson-ota-public.asc ]; then    # file exists in jetson l4t-base image
         # add jetson repo
         echo "deb https://repo.download.nvidia.com/jetson/ffmpeg main main" | tee /etc/apt/sources.list.d/jetson_ffmpeg.list

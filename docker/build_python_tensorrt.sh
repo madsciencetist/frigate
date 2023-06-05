@@ -22,7 +22,7 @@ if [[ "${TARGETARCH}" == "arm64" ]]; then
 
   # Build wheel
   cd /workspace/TensorRT/python
-  EXT_PATH=$EXT_PATH PYTHON_MAJOR_VERSION=3 PYTHON_MINOR_VERSION=9 TARGET_ARCHITECTURE=aarch64 /bin/bash ./build.sh
+  EXT_PATH=$EXT_PATH PYTHON_MAJOR_VERSION=3 PYTHON_MINOR_VERSION=9 TARGET=aarch64 /bin/bash ./build.sh
   mv build/dist/*.whl /trt-wheels/
 
 fi
