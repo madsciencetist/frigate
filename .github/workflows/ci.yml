@@ -65,7 +65,20 @@ jobs:
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-tensorrt
           cache-from: type=gha
-      - name: Build and push Jetson
+      - name: Build and push Jetson TX2 & Nano
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          target: frigate
+          build-args:
+            - BASE_IMAGE=timongentzsch/l4t-ubuntu20-opencv:latest
+            - SLIM_BASE=timongentzsch/l4t-ubuntu20-opencv:latest
+          tags: |
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson
+          cache-from: type=gha
+      - name: Build and push Jetson Xavier & Orin
         uses: docker/build-push-action@v4
         with:
           context: .
