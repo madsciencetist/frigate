@@ -296,6 +296,22 @@ FROM frigate AS frigate-jetson
 RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
     pip3 install -U /deps/trt-wheels/*.whl
 
+# Image to generate TRT models (must run on target HW and with exact same TRT version)
+FROM frigate-jetson AS jetson-trt-models
+RUN apt-get update \
+    && apt-get install -y git cmake build-essential protobuf-compiler libprotobuf-dev libpython3.9-dev python3-pip wget python-is-python3 \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --upgrade pip \
+    && pip3 install onnx==1.9.0 protobuf==3.20.3 numpy==1.23.*
+RUN git clone --depth 1 https://github.com/yeahme49/tensorrt_demos.git /tensorrt_demos \
+    && cd /tensorrt_demos/yolo \
+    && ./download_yolo.sh
+COPY --from=jetson-trt-wheels /etc/CUDA_VER /etc/CUDA_VER
+RUN [ -e /usr/local/cuda ] || ln -s /usr/local/cuda-$(cat /etc/CUDA_VER) /usr/local/cuda
+WORKDIR /tensorrt_demos/yolo
+COPY docker/generate_trt_model.sh /tensorrt_demos/yolo/generate_trt_model.sh
+ENTRYPOINT ["/tensorrt_demos/yolo/generate_trt_model.sh"]
+
 # Dev Container w/ TRT
 FROM devcontainer AS devcontainer-trt
 

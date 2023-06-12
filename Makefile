@@ -28,10 +28,16 @@ arm64:
 	docker buildx build --platform linux/arm64 --target=frigate --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH) .
 
 jetson-jetpack4: version
-	docker buildx build --platform linux/arm64 --target=frigate-jetson --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson-jetpack4 $(JETPACK5_ARGS) .
+	docker buildx build --platform linux/arm64 --target=frigate-jetson --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson-jetpack4 $(JETPACK4_ARGS) .
+
+jetson-jetpack4-models: version
+	docker buildx build --platform linux/arm64 --target=jetson-trt-models --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson-jetpack4-models $(JETPACK4_ARGS) .
 
 jetson-jetpack5: version
 	docker buildx build --platform linux/arm64 --target=frigate-jetson --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson-jetpack5 $(JETPACK5_ARGS) .
+
+jetson-jetpack5-models: version
+	docker buildx build --platform linux/arm64 --target=jetson-trt-models --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH)-jetson-jetpack5-models $(JETPACK5_ARGS) .
 
 build: version amd64 arm64 jetson
 	docker buildx build --platform linux/arm64/v8,linux/amd64 --target=frigate --tag $(IMAGE_REPO):$(VERSION)-$(COMMIT_HASH) .
