@@ -91,3 +91,29 @@ jobs:
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson-jetpack5
           cache-from: type=gha
+      - name: Build and push TensorRT model conversion (Jetson Nano, TX1 & TX2)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          target: jetson-trt-models
+          build-args:
+            - BASE_IMAGE=timongentzsch/l4t-ubuntu20-opencv:latest
+            - SLIM_BASE=timongentzsch/l4t-ubuntu20-opencv:latest
+          tags: |
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson-jetpack4-models
+          cache-from: type=gha
+      - name: Build and push TensorRT model conversion (Jetson Xavier & Orin)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          target: jetson-trt-models
+          build-args:
+            - BASE_IMAGE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
+            - SLIM_BASE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
+          tags: |
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson-jetpack5-models
+          cache-from: type=gha

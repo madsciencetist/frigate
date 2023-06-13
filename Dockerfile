@@ -163,7 +163,7 @@ ARG TARGETARCH
 COPY requirements-tensorrt.txt /requirements-tensorrt.txt
 RUN mkdir -p /trt-wheels && pip3 wheel --wheel-dir=/trt-wheels -r /requirements-tensorrt.txt
 
-FROM wheels as jetson-trt-wheels
+FROM wheels AS jetson-trt-wheels
 ARG DEBIAN_FRONTEND
 ARG TARGETARCH
 
@@ -189,6 +189,17 @@ RUN --mount=type=bind,source=docker/build_python_tensorrt.sh,target=/deps/build_
 
 COPY requirements-tensorrt-jetson.txt /requirements-tensorrt-jetson.txt
 RUN pip3 wheel --wheel-dir=/trt-wheels -r /requirements-tensorrt-jetson.txt
+
+FROM wheels AS jetson-trt-model-wheels
+ARG DEBIAN_FRONTEND
+
+RUN apt-get update \
+    && apt-get install -y protobuf-compiler libprotobuf-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Match versions in tensorrt_models.sh
+RUN pip3 wheel --wheel-dir=/trt-model-wheels onnx==1.9.0 protobuf==3.20.3 numpy==1.23.*
+
 
 # Collect deps in a single layer
 FROM scratch AS deps-rootfs
@@ -306,6 +317,35 @@ RUN --mount=type=bind,from=trt-wheels,source=/trt-wheels,target=/deps/trt-wheels
 FROM frigate AS frigate-jetson
 RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
     pip3 install -U /deps/trt-wheels/*.whl
+
+# Image to generate TRT models (must run on target HW and with exact same TRT version)
+FROM wget AS tensorrt_demos
+RUN wget -q https://github.com/yeahme49/tensorrt_demos/archive/refs/heads/master.zip \
+    && unzip master.zip && mv tensorrt_demos-master /tensorrt_demos && rm master.zip \
+    && cd /tensorrt_demos/yolo && ./download_yolo.sh 2> /dev/null
+
+FROM deps AS jetson-trt-models
+RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
+    --mount=type=bind,from=jetson-trt-model-wheels,source=/trt-model-wheels,target=/deps/trt-model-wheels \
+    pip3 install -U /deps/trt-wheels/*.whl /deps/trt-model-wheels/*.whl
+
+# On Jetpack 4.6, libnvinfer is mounted from the host via the nvidia container runtime, and thus must
+# not be in the image, so don't add: {libnvinfer, libnvinfer-plugin, libnvparsers, libnvonnxparsers}
+# Otherwise model generation fails or produces models that don't load.
+# For Jetpack 5.0, these libraries must be installed in the image.
+RUN apt-get update \
+    && apt-get install -y python-is-python3 libprotobuf17 build-essential cuda-nvcc-* \
+    && if [ ${CUDA_VERSION%%.*} -ge 11 ]; then \
+         apt-get install -y libnvinfer-dev libnvinfer-plugin-dev libnvparsers-dev libnvonnxparsers-dev; \
+       else \
+         [ ! -e /usr/lib/aarch64-linux-gnu/libnvinfer.so ]; \
+       fi \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=tensorrt_demos /tensorrt_demos /tensorrt_demos
+WORKDIR /tensorrt_demos/yolo
+COPY docker/tensorrt_models.sh /tensorrt_models.sh
+ENTRYPOINT ["/tensorrt_models.sh"]
 
 # Dev Container w/ TRT
 FROM devcontainer AS devcontainer-trt
