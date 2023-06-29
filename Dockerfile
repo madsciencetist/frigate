@@ -201,6 +201,15 @@ RUN apt-get update \
 RUN pip3 wheel --wheel-dir=/trt-model-wheels onnx==1.9.0 protobuf==3.20.3 numpy==1.23.*
 
 
+FROM wget AS jetson-ffmpeg
+ARG DEBIAN_FRONTEND
+ENV CCACHE_DIR /root/.ccache
+ENV CCACHE_MAXSIZE 2G
+RUN --mount=type=bind,source=docker/build_jetson_ffmpeg.sh,target=/deps/build_jetson_ffmpeg.sh \
+    --mount=type=cache,target=/root/.ccache \
+    /deps/build_jetson_ffmpeg.sh
+
+
 # Collect deps in a single layer
 FROM scratch AS deps-rootfs
 COPY --from=nginx /usr/local/nginx/ /usr/local/nginx/
@@ -315,6 +324,7 @@ RUN --mount=type=bind,from=trt-wheels,source=/trt-wheels,target=/deps/trt-wheels
 
 # Frigate w/ TensorRT for NVIDIA Jetson platforms
 FROM frigate AS frigate-jetson
+COPY --from=jetson-ffmpeg /rootfs /
 RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
     pip3 install -U /deps/trt-wheels/*.whl
 

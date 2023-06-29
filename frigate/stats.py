@@ -181,7 +181,7 @@ async def set_gpu_stats(
             else:
                 stats["nvidia-gpu"] = {"gpu": -1, "mem": -1}
                 hwaccel_errors.append(args)
-        elif "nvv4l2" in args or "jetson" in args:
+        elif "nvmpi" in args or "jetson" in args:
             # nvidia Jetson
             jetson_usage = get_jetson_stats()
 

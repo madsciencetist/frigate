@@ -104,8 +104,8 @@ PRESETS_HW_ACCEL_DECODE = {
         "-hwaccel_output_format",
         "cuda",
     ],
-    "preset-jetson-h264": ["-c:v", "h264_nvv4l2dec"],
-    "preset-jetson-h265": ["-c:v", "hevc_nvv4l2dec"],
+    "preset-jetson-h264": ["-c:v", "h264_nvmpi"],
+    "preset-jetson-h265": ["-c:v", "hevc_nvmpi"],
 }
 
 PRESETS_HW_ACCEL_SCALE = {
