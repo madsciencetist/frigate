@@ -117,6 +117,8 @@ PRESETS_HW_ACCEL_SCALE = {
     "preset-vaapi": "-r {0} -vf fps={0},scale_vaapi=w={1}:h={2},hwdownload,format=yuv420p",
     "preset-intel-qsv-h264": "-r {0} -vf vpp_qsv=framerate={0}:w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
     "preset-intel-qsv-h265": "-r {0} -vf vpp_qsv=framerate={0}:w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
+    # If `detect` is the only role using the decoded video, the four below are further optimized by adding
+    # `-resize {w}x{h}` to the hwaccel_args, resizing for free while decoding, instead of using a preset
     "preset-nvidia-h264": "-r {0} -vf fps={0},scale_cuda=w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
     "preset-nvidia-h265": "-r {0} -vf fps={0},scale_cuda=w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
     "preset-jetson-h264": "-r {0} -init_hw_device cuda=mygpu:0 -filter_hw_device mygpu -vf fps={0},hwupload,scale_cuda={1}:{2},hwdownload",
@@ -164,20 +166,18 @@ def parse_preset_hardware_acceleration_scale(
 ) -> list[str]:
     """Return the correct scaling preset or default preset if none is set."""
     if not isinstance(arg, str) or " " in arg:
-        scale = PRESETS_HW_ACCEL_SCALE["default"].format(fps, width, height).split(" ")
-        scale.extend(detect_args)
-        return scale
-
-    scale = PRESETS_HW_ACCEL_SCALE.get(arg, "")
-
-    if scale:
-        scale = scale.format(fps, width, height).split(" ")
-        scale.extend(detect_args)
-        return scale
+        if "-resize" in arg:
+            # already scaled while decoding, so no need for scale filter
+            scale = "-vf fps={0}".format(fps)
+        else:
+            scale = PRESETS_HW_ACCEL_SCALE["default"].format(fps, width, height)
     else:
-        scale = scale.format(fps, width, height).split(" ")
-        scale.extend(detect_args)
-        return scale
+        scale = PRESETS_HW_ACCEL_SCALE.get(arg, "")
+        scale = scale.format(fps, width, height)
+
+    scale = scale.split(" ")
+    scale.extend(detect_args)
+    return scale
 
 
 class EncodeTypeEnum(str, Enum):

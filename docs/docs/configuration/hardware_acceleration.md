@@ -290,3 +290,21 @@ Jetson hardware-accelerated *encoding* is not activated by the jetson presets. T
 if enabled, will use libx264.
 
 :::
+
+:::note
+
+The nvmpi decoder used by these presets decodes to a DMABUF and copies to CPU memory before sending the image downstream.
+The presets then upload the image to the GPU, downscale it with CUDA, and download the scaled image back to the CPU.
+These extra upload/CUDA/download steps can be skipped by resizing directly in the encoder:
+
+```yaml
+ffmpeg:
+  hwaccel_args: h264_nvmpi -resize 1280x720
+detect:
+  height: 1280
+  width: 720
+```
+
+In the future the Jetson presets may switch to this behavior.
+
+:::
