@@ -316,17 +316,21 @@ WORKDIR /opt/frigate/
 COPY --from=rootfs / /
 
 # Frigate w/ TensorRT Support as separate image
-FROM frigate AS frigate-tensorrt
+FROM deps AS frigate-tensorrt
 RUN --mount=type=bind,from=trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
     pip3 install -U /deps/trt-wheels/*.whl && \
     ln -s libnvrtc.so.11.2 /usr/local/lib/python3.9/dist-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so && \
     ldconfig
+WORKDIR /opt/frigate/
+COPY --from=rootfs / /
 
 # Frigate w/ TensorRT for NVIDIA Jetson platforms
-FROM frigate AS frigate-jetson
+FROM deps AS frigate-jetson
 COPY --from=jetson-ffmpeg /rootfs /
 RUN --mount=type=bind,from=jetson-trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
     pip3 install -U /deps/trt-wheels/*.whl
+WORKDIR /opt/frigate/
+COPY --from=rootfs / /
 
 # Image to generate TRT models (must run on target HW and with exact same TRT version)
 FROM wget AS tensorrt_demos
