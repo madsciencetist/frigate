@@ -65,6 +65,19 @@ jobs:
           tags: |
             ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-tensorrt
           cache-from: type=gha
+      - name: Build and push TensorRT (Jetson Nano, TX1 & TX2)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          target: frigate-jetson
+          build-args:
+            - BASE_IMAGE=timongentzsch/l4t-ubuntu20-opencv:latest
+            - SLIM_BASE=timongentzsch/l4t-ubuntu20-opencv:latest
+          tags: |
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson-jetpack4
+          cache-from: type=gha
       - name: Build and push TensorRT (Jetson Xavier & Orin)
         uses: docker/build-push-action@v4
         with:
@@ -76,5 +89,5 @@ jobs:
             - BASE_IMAGE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
             - SLIM_BASE=nvcr.io/nvidia/l4t-tensorrt:r8.4.1-runtime
           tags: |
-            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson
+            ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ github.ref_name }}-${{ env.SHORT_SHA }}-jetson-jetpack5
           cache-from: type=gha

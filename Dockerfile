@@ -149,10 +149,10 @@ RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py \
     && python3 get-pip.py "pip"
 
 COPY requirements.txt /requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r /requirements.txt
 
 COPY requirements-wheels.txt /requirements-wheels.txt
-RUN pip3 wheel --wheel-dir=/wheels -r requirements-wheels.txt
+RUN pip3 wheel --wheel-dir=/wheels -r /requirements-wheels.txt
 
 # Make this a separate target so it can be built/cached optionally
 FROM wheels as trt-wheels
@@ -161,11 +161,15 @@ ARG TARGETARCH
 
 # Add TensorRT wheels to another folder
 COPY requirements-tensorrt.txt /requirements-tensorrt.txt
-RUN mkdir -p /trt-wheels && pip3 wheel --wheel-dir=/trt-wheels -r requirements-tensorrt.txt
+RUN mkdir -p /trt-wheels && pip3 wheel --wheel-dir=/trt-wheels -r /requirements-tensorrt.txt
 
 FROM wheels as jetson-trt-wheels
 ARG DEBIAN_FRONTEND
 ARG TARGETARCH
+
+RUN apt update \
+    && apt install -y libnvinfer8 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Determine version of tensorrt already installed in base image, e.g. "Version: 8.4.1-1+cuda11.4"
 RUN NVINFER_VER=$(dpkg -s libnvinfer8 | grep -Po "Version: \K.*") \
@@ -176,6 +180,7 @@ RUN NVINFER_VER=$(dpkg -s libnvinfer8 | grep -Po "Version: \K.*") \
 RUN CUDA_PKG_VER=$(sed "s/\./-/g" /etc/CUDA_VER) \
     && apt-get update \
     && apt-get install -y ccache cuda-cudart-dev-${CUDA_PKG_VER} cuda-nvcc-${CUDA_PKG_VER} libnvonnxparsers-dev libnvparsers-dev libnvinfer-plugin-dev \
+    && ([ -e /usr/local/cuda ] || ln -s /usr/local/cuda-$(cat /etc/CUDA_VER) /usr/local/cuda) \
     && rm -rf /var/lib/apt/lists/*;
 RUN --mount=type=bind,source=docker/build_python_tensorrt.sh,target=/deps/build_python_tensorrt.sh \
     --mount=type=cache,target=/root/.ccache \
@@ -183,7 +188,7 @@ RUN --mount=type=bind,source=docker/build_python_tensorrt.sh,target=/deps/build_
     && TENSORRT_VER=$(cat /etc/TENSORRT_VER) /deps/build_python_tensorrt.sh
 
 COPY requirements-tensorrt-jetson.txt /requirements-tensorrt-jetson.txt
-RUN pip3 wheel --wheel-dir=/trt-wheels -r requirements-tensorrt-jetson.txt
+RUN pip3 wheel --wheel-dir=/trt-wheels -r /requirements-tensorrt-jetson.txt
 
 # Collect deps in a single layer
 FROM scratch AS deps-rootfs
