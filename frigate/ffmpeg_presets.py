@@ -119,8 +119,8 @@ PRESETS_HW_ACCEL_SCALE = {
     "preset-intel-qsv-h265": "-r {0} -vf vpp_qsv=framerate={0}:w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
     "preset-nvidia-h264": "-r {0} -vf fps={0},scale_cuda=w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
     "preset-nvidia-h265": "-r {0} -vf fps={0},scale_cuda=w={1}:h={2}:format=nv12,hwdownload,format=nv12,format=yuv420p",
-    "preset-jetson-h264": "-r {0} -s {1}x{2}",  # TODO: can jetson ffmpeg scale on GPU or VIC?
-    "preset-jetson-h265": "-r {0} -s {1}x{2}",
+    "preset-jetson-h264": "-r {0} -init_hw_device cuda=mygpu:0 -filter_hw_device mygpu -vf fps={0},hwupload,scale_cuda={1}:{2},hwdownload",
+    "preset-jetson-h265": "-r {0} -init_hw_device cuda=mygpu:0 -filter_hw_device mygpu -vf fps={0},hwupload,scale_cuda={1}:{2},hwdownload",
     "default": "-r {0} -s {1}x{2}",
 }
 

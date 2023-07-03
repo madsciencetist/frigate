@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # For jetson platforms, build ffmpeg with custom patches. NVIDIA supplies a deb
-# with accelerated decoding, but it doesn't have accelerated encoding
+# with accelerated decoding, but it doesn't have accelerated scaling or encoding
 
 set -euxo pipefail
 
@@ -32,15 +32,22 @@ make -j$(nproc)
 make install
 cd ../../
 
+# Install nv-codec-headers to enable ffnvcodec filters (scale_cuda)
+wget -q https://github.com/FFmpeg/nv-codec-headers/archive/refs/heads/master.zip
+unzip master.zip && rm master.zip && cd nv-codec-headers-master
+make PREFIX=$INSTALL_PREFIX install
+cd ../ && rm -rf nv-codec-headers-master
+
 # Build ffmpeg with nvmpi patch
 wget -q https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz
 tar xaf ffmpeg-*.tar.xz && rm ffmpeg-*.tar.xz && cd ffmpeg-*
 patch -p1 < ../jetson-ffmpeg-master/ffmpeg_patches/ffmpeg6.0_nvmpi.patch
 export PKG_CONFIG_PATH=$INSTALL_PREFIX/lib/pkgconfig
-# enable Jetson codecs
+# enable Jetson codecs but disable dGPU codecs
 ./configure --cc='ccache gcc' --cxx='ccache g++' \
             --enable-shared --disable-static --prefix=$INSTALL_PREFIX \
-            --enable-nvmpi
+            --enable-nvmpi --enable-ffnvcodec --enable-cuda-llvm \
+            --disable-cuvid --disable-nvenc --disable-nvdec \
     || (cat ffbuild/config.log && false)
 make -j$(nproc)
 make install
