@@ -71,3 +71,19 @@ Some users found that mounting a drive via `fstab` with the `sync` option caused
 #### Copy Times < 1 second
 
 If the storage is working quickly then this error may be caused by CPU load on the machine being too high for Frigate to have the resources to keep up. Try temporarily shutting down other services to see if the issue improves.
+
+### Apple iPhone issues playing clips
+
+### Clips don't download from Home Assistant app
+
+Home Assistant users can download clips from either the HA `Media` tab or from the `Frigate` addon itself, but unfortunately neither of those download methods work from within the iOS companion app. It is a [known issue](https://github.com/dermotduffy/frigate-hass-card/issues/808). As a workaround, visit your Home Assistant or Frigate URL from a web browser.
+
+### Clips don't play on iOS or macOS
+
+HEVC videos can be tagged as either `hev1` or `hvc1`. Unfortunately ffmpeg defaults to the former when encoding or copying an RTSP HEVC stream, but Apple [prefers the latter](https://trac.ffmpeg.org/wiki/Encode/H.265#FinalCutandApplestuffcompatibility). If your camera is streaming HEVC (H.265) video and you find that you are unable to download clips from Frigate, add `-tag:v hvc1` to your ffmpeg record output args, e.g.:
+
+```yaml
+ffmpeg:
+  output_args:
+    record: -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c copy -an -tag:v hvc1
+```
